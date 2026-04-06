@@ -1,0 +1,45 @@
+services:
+
+    # ── Production ─────────────────────────────────────────────────────────────
+    app:
+        build:
+            context: .
+            dockerfile: Dockerfile
+            target: runner     # use the final minimal stage
+        image: nextjs-starter-kit:latest
+        container_name: nextjs-app
+        ports:
+            - "3000:3000"
+        environment:
+            - NODE_ENV=production
+            # Override / add env vars here or use an env_file:
+            # - NEXT_PUBLIC_API_BASE_URL=https://api.example.com
+            # - JWT_SECRET=your-production-secret
+        env_file:
+            - path: .env.local
+              required: false   # skip gracefully when the file is missing
+        restart: unless-stopped
+
+    # ── Development (hot-reload) ────────────────────────────────────────────────
+    dev:
+        build:
+            context: .
+            dockerfile: Dockerfile
+            target: deps       # only install deps, run next dev via command
+        image: nextjs-starter-kit:dev
+        container_name: nextjs-dev
+        ports:
+            - "3000:3000"
+        volumes:
+            # Mount source so edits are reflected immediately
+            - .:/app
+            # Keep the container's node_modules independent of the host
+            - /app/node_modules
+        environment:
+            - NODE_ENV=development
+        env_file:
+            - path: .env.local
+              required: false
+        command: npm run dev
+        profiles:
+            - dev              # only starts when: docker compose --profile dev up
